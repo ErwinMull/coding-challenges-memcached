@@ -10,7 +10,9 @@
 ;;; =========================== Request handling ===============================
 
 (define (handle in out)
-  (write-bytes #"HELLO, CLIENT :)\n" out))
+  (let* ([buf (make-bytes 1024 0)])
+    (define nread (read-bytes-avail! buf in))
+    (write-bytes (subbytes buf 0 nread) out)))
 
 ;;; ========================= Server & connections =============================
 
