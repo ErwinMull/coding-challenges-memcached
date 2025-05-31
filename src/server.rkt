@@ -1,9 +1,18 @@
 #lang racket/base
 
+;;; =============================== Imports ====================================
+
 (require racket/tcp)
+
+;;; =============================== Exports ====================================
+(provide serve)
+
+;;; =========================== Request handling ===============================
 
 (define (handle in out)
   (write-bytes #"HELLO, CLIENT :)\n" out))
+
+;;; ========================= Server & connections =============================
 
 (define (accept-and-handle listener)
   (define-values (in out) (tcp-accept listener))
