@@ -16,16 +16,18 @@
 
 (define exit-log-loop-channel (make-channel))
 
-(define (log-setup exit-channel)
+(define (log-setup exit-channel
+                   log-port)
   (λ ()
     (let loop ()
       (sync
        (handle-evt nrc
                    (λ (v)
-                     (printf "[~a] ~a: ~a\n"
-                             (date->string (current-date) #t)
-                             (vector-ref v 0)
-                             (vector-ref v 1))
+                     (fprintf log-port
+                              "[~a] ~a: ~a\n"
+                              (date->string (current-date) #t)
+                              (vector-ref v 0)
+                              (vector-ref v 1))
                      (loop)))
        exit-channel))))
 
@@ -67,7 +69,7 @@
       [else
        (define shutdown-log-thread
          (let* ([chan (make-channel)]
-                [log-loop (log-setup chan)]
+                [log-loop (log-setup chan (current-output-port))]
                 [t (thread log-loop)])
            (λ ()
              (channel-put chan #t)
