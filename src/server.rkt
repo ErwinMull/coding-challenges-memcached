@@ -50,7 +50,8 @@
   (close-output-port out))
 
 (define (serve/private port-no
-                       #:test? [test? #f])
+                       #:test? [test? #f]
+                       #:log-file [log-file (current-output-port)])
   (define cust (make-custodian))
   (parameterize ([current-custodian cust]
                  [current-logger lg]
@@ -69,7 +70,7 @@
       [else
        (define shutdown-log-thread
          (let* ([chan (make-channel)]
-                [log-loop (log-setup chan (current-output-port))]
+                [log-loop (log-setup chan log-file)]
                 [t (thread log-loop)])
            (λ ()
              (channel-put chan #t)
