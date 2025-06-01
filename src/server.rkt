@@ -45,10 +45,16 @@
 ;;; ========================= Server & connections =============================
 
 (define (accept-and-handle listener)
-  (define-values (in out) (tcp-accept listener))
-  (handle in out)
-  (close-input-port in)
-  (close-output-port out))
+  (define cust (make-custodian))
+  (parameterize ([current-custodian cust])
+    (define-values (in out) (tcp-accept listener))
+    (thread (λ ()
+              (handle in out)
+              (close-input-port in)
+              (close-output-port out))))
+  (void (thread (λ ()
+                  (sleep 10)
+                  (custodian-shutdown-all cust)))))
 
 (define (serve/private port-no
                        #:test? [test? #f]
