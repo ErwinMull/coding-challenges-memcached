@@ -53,10 +53,11 @@
                  [date-display-format 'iso-8601])
     (define listener (tcp-listen port-no 5 #t))
 
-    (define (loop)
-      (accept-and-handle listener)
-      (loop))
-    (thread loop)
+    (thread
+     (λ ()
+       (let loop ()
+         (accept-and-handle listener)
+         (loop))))
 
     (cond
       [test?
