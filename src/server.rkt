@@ -7,7 +7,7 @@
 
 ;;; =============================== Exports ====================================
 
-(provide serve)
+(provide serve/test)
 
 ;;; =============================== Logging ====================================
 
@@ -45,21 +45,39 @@
   (close-input-port in)
   (close-output-port out))
 
-(define (serve [port-no 11211])
+(define (serve/private port-no
+                       #:test? [test? #f])
   (define cust (make-custodian))
   (parameterize ([current-custodian cust]
                  [current-logger lg]
                  [date-display-format 'iso-8601])
     (define listener (tcp-listen port-no 5 #t))
+
     (define (loop)
       (accept-and-handle listener)
       (loop))
-    (define log-thread (thread log-loop))
     (thread loop)
-    (log-info "Server started")
-    (with-handlers ([exn:break? (lambda (e)
-                                  (log-info "Server shutdown")
-                                  (channel-put exit-log-loop-channel #t)
-                                  (thread-wait log-thread)
-                                  (custodian-shutdown-all cust))])
-      (sync/enable-break never-evt))))
+
+    (cond
+      [test?
+       (λ () (custodian-shutdown-all cust))]
+      [else
+       (define shutdown-log-thread
+         (let ([t (thread log-loop)])
+           (λ ()
+             (channel-put exit-log-loop-channel #t)
+             (thread-wait t))))
+       (log-info "Server started")
+       (with-handlers ([exn:break? (lambda (e)
+                                     (log-info "Server shutdown")
+                                     (shutdown-log-thread)
+                                     (custodian-shutdown-all cust))])
+         (sync/enable-break never-evt))])))
+
+(define (serve/test [port-no 11211])
+  (define stop (serve/private port-no
+                              #:test? #t))
+  stop)
+
+(define (serve [port-no 11211])
+  (serve/private port-no))

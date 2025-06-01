@@ -12,7 +12,7 @@
 ;;; =========================== Global variables ===============================
 
 (define PORTNO 11211)
-(define custodian #f)
+(define STOP #f)
 
 ;;; ============ Test suite: check if server is running on port ================
 
@@ -22,14 +22,10 @@
    "Suite for testing whether the server runs on a given port on localhost"
 
    #:before (λ ()
-              (set! custodian (make-custodian))
-              (parameterize ([current-custodian custodian])
-                (thread (λ () (serve PORTNO)))
-                ;; TODO: This is bad but works for now. Have to find a better
-                ;; solution to wait for startup
-                (sleep 1)))
+              (set! STOP (serve/test PORTNO)))
    #:after (λ ()
-             (custodian-shutdown-all custodian))
+             (STOP)
+             (set! STOP #f))
 
    (test-case
        "Connect to port"
