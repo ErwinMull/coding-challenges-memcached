@@ -16,16 +16,18 @@
 
 (define exit-log-loop-channel (make-channel))
 
-(define (log-loop)
-  (sync
-   (handle-evt nrc
-                 (λ (v)
-                   (printf "[~a] ~a: ~a\n"
-                           (date->string (current-date) #t)
-                           (vector-ref v 0)
-                           (vector-ref v 1))
-                   (log-loop)))
-   exit-log-loop-channel))
+(define (log-setup exit-channel)
+  (λ ()
+    (let loop ()
+      (sync
+       (handle-evt nrc
+                   (λ (v)
+                     (printf "[~a] ~a: ~a\n"
+                             (date->string (current-date) #t)
+                             (vector-ref v 0)
+                             (vector-ref v 1))
+                     (loop)))
+       exit-channel))))
 
 ;;; =========================== Request handling ===============================
 
@@ -64,9 +66,11 @@
        (λ () (custodian-shutdown-all cust))]
       [else
        (define shutdown-log-thread
-         (let ([t (thread log-loop)])
+         (let* ([chan (make-channel)]
+                [log-loop (log-setup chan)]
+                [t (thread log-loop)])
            (λ ()
-             (channel-put exit-log-loop-channel #t)
+             (channel-put chan #t)
              (thread-wait t))))
        (log-info "Server started")
        (with-handlers ([exn:break? (lambda (e)
