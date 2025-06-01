@@ -90,3 +90,8 @@
 
 (define (serve [port-no 11211])
   (serve/private port-no))
+
+;;; ================================= Main =====================================
+
+(module+ main
+  (serve))
