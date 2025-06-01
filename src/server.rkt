@@ -34,17 +34,18 @@
 ;;; =========================== Request handling ===============================
 
 (define (handle in out)
-  (let* ([buf (make-bytes 1024 0)])
+  (let* ([buf (make-bytes (expt 2 16) 0)])
     (define nread (read-bytes-avail! buf in))
-    (write-bytes (subbytes buf 0 nread) out)))
+    (define message (subbytes buf 0 nread))
+    (log-info (format "Received ~a bytes: ~v"
+                      nread
+                      message))
+    (write-bytes message out)))
 
 ;;; ========================= Server & connections =============================
 
 (define (accept-and-handle listener)
   (define-values (in out) (tcp-accept listener))
-
-  (log-info "Accepted")
-
   (handle in out)
   (close-input-port in)
   (close-output-port out))
