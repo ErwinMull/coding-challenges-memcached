@@ -16,7 +16,7 @@
   #:transparent]
 
 (struct storage-unit
-  (flags bytecount data-block)
+  (flags byte-count data-block)
   #:extra-constructor-name make-storage-unit
   #:transparent)
 
