@@ -16,7 +16,8 @@
 
 ;;; ============ Test suite: check if server is running on port ================
 
-(define port-suite
+(void
+ (run-tests
   (test-suite
 
    "Suite for testing whether the server runs on a given port on localhost"
@@ -39,11 +40,4 @@
          (with-check-info (['message (string-info
                                       (format "Server not running on port ~a!"
                                               PORTNO))])
-           (fail-check)))))))
-
-;;; ========================== Running all suites ==============================
-
-(define SUITES (list port-suite))
-
-(for ([suite (in-list SUITES)])
-  (run-tests suite))
+           (fail-check))))))))
