@@ -44,3 +44,10 @@
                        (or (bytes=? (sixth parts) #"noreply")
                            (error "TODO: custom exception? 3"))))
   (make-command name key flags exptime byte-count noreply))
+
+;;; ======================= Command -> storage unit ============================
+
+(define (command+data->storage-unit command data)
+  (make-storage-unit (command-flags command)
+                     (command-byte-count command)
+                     data))
