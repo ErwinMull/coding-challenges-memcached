@@ -9,7 +9,8 @@
 (provide (struct-out command)
          (struct-out storage-unit)
          bytes->command
-         command+data->storage-unit)
+         command+data->storage-unit
+         key+storage-unit->bytes)
 
 ;;; ============================== Constants ===================================
 
@@ -58,3 +59,14 @@
   (make-storage-unit (command-flags command)
                      (command-byte-count command)
                      data))
+
+;;; ======================== Storage unit -> bytes =============================
+
+(define (key+storage-unit->bytes key storage-unit)
+  (bytes-append (string->bytes/utf-8
+                 (format "VALUES ~a ~a ~a"
+                         key
+                         (storage-unit-flags storage-unit)
+                         (storage-unit-byte-count storage-unit))
+                 #"\r\n"
+                 (storage-unit-data-block storage-unit))))
