@@ -20,6 +20,8 @@
   #:extra-constructor-name make-storage-unit
   #:transparent)
 
+;;; =========================== Bytes -> command ===============================
+
 (define (bytes->symbol b)
   (string->symbol (bytes->string/utf-8 b)))
 
