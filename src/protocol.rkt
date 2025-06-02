@@ -4,6 +4,13 @@
 
 (require racket/list)
 
+;;; =============================== Exports ====================================
+
+(provide (struct-out command)
+         (struct-out storage-unit)
+         bytes->command
+         command+data->storage-unit)
+
 ;;; ============================== Constants ===================================
 
 (define VALID-COMMANDS (list 'set 'get))
