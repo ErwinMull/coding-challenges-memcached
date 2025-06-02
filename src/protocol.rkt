@@ -67,6 +67,6 @@
                  (format "VALUES ~a ~a ~a"
                          key
                          (storage-unit-flags storage-unit)
-                         (storage-unit-byte-count storage-unit))
-                 #"\r\n"
-                 (storage-unit-data-block storage-unit))))
+                         (storage-unit-byte-count storage-unit)))
+                #"\r\n"
+                 (storage-unit-data-block storage-unit)))
