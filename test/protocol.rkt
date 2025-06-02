@@ -27,4 +27,13 @@
                     #"hello")
                    (make-storage-unit '0 4 #"hello"))
      ;; TODO: add more tests!
+     )
+
+   (test-case
+       "key+storage-unit->bytes"
+     (check-equal? (key+storage-unit->bytes
+                    'test
+                    (make-storage-unit 0 5 #"hello"))
+                   #"VALUES test 0 5\r\nhello")
+     ;; TODO: add more tests!
      ))))
