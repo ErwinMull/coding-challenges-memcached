@@ -10,7 +10,7 @@
 
 (define (handle-set com data)
   (define key (command-key com))
-  (define storage-unit (commad+data->storage-unit com data))
+  (define storage-unit (command+data->storage-unit com data))
   (channel-put set-channel (vector key storage-unit))
   (void (channel-get set-channel))
   (unless (command-noreply com)
@@ -29,14 +29,14 @@
    (λ ()
      (let loop ([ht (hasheq)])
        (void
-        (sync (handle-event set-channel
+        (sync (handle-evt set-channel
                             (λ (v)
                               (define key (vector-ref v 0))
                               (define storage-unit (vector-ref v 1))
                               (define new-ht (hash-set ht key storage-unit))
                               (channel-put set-channel OK)
                               (loop new-ht)))
-              (handle-event get-channel
+              (handle-evt get-channel
                             (λ (key)
                               (channel-put (hash-ref ht key #f))
                               (loop ht)))))))))
