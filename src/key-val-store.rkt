@@ -1,0 +1,42 @@
+#lang racket/base
+
+(require "protocol.rkt")
+
+(define set-channel (make-channel))
+(define get-channel (make-channel))
+
+(define OK 0)
+(define ERR 1)
+
+(define (handle-set com data)
+  (define key (command-key com))
+  (define storage-unit (commad+data->storage-unit com data))
+  (channel-put set-channel (vector key storage-unit))
+  (void (channel-get set-channel))
+  (unless (command-noreply com)
+    #"STORED"))
+
+(define (handle-get com)
+  (define key (command-key com))
+  (channel-put get-channel key)
+  (define res (channel-get get-channel))
+  (if res
+      (key+storage-unit->bytes key res)
+      #"NOT FOUND"))
+
+(define (init-key-val-thread)
+  (thread
+   (λ ()
+     (let loop ([ht (hasheq)])
+       (void
+        (sync (handle-event set-channel
+                            (λ (v)
+                              (define key (vector-ref v 0))
+                              (define storage-unit (vector-ref v 1))
+                              (define new-ht (hash-set ht key storage-unit))
+                              (channel-put set-channel OK)
+                              (loop new-ht)))
+              (handle-event get-channel
+                            (λ (key)
+                              (channel-put (hash-ref ht key #f))
+                              (loop ht)))))))))
