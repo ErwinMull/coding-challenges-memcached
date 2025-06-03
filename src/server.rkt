@@ -3,7 +3,9 @@
 ;;; =============================== Imports ====================================
 
 (require racket/tcp
-         racket/date)
+         racket/date
+
+         "protocol.rkt")
 
 ;;; =============================== Exports ====================================
 
@@ -33,14 +35,28 @@
 
 ;;; =========================== Request handling ===============================
 
+(define (drain-input-port in)
+  (define buf (make-bytes (expt 2 14)))
+  (let loop ()
+    (define try-read (read-bytes-avail!* buf in))
+    (unless (or (eof-object? try-read)
+                (and (number? try-read) (= try-read 0)))
+      (loop))))
+
 (define (handle in out)
-  (let* ([buf (make-bytes (expt 2 16) 0)])
-    (define nread (read-bytes-avail! buf in))
-    (define message (subbytes buf 0 nread))
-    (log-info (format "Received ~a bytes: ~v"
-                      nread
-                      message))
-    (write-bytes message out)))
+  (with-handlers ([exn:fail? (λ (exn)
+                               (write-bytes #"ERROR" out))])
+    (define b (read-bytes-line in 'return-linefeed))
+    (define com (bytes->command b))
+    (define data
+      (and (storage-command? com)
+           (read-bytes (command-byte-count com) in)))
+    (drain-input-port in)
+    (log-info (format "Received: ~a ~a ~a"
+                      (command-name com)
+                      (command-key com)
+                      data))
+    (write-bytes #"RECEIVED" out)))
 
 ;;; ========================= Server & connections =============================
 
