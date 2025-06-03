@@ -14,7 +14,9 @@
 
 ;;; ============================== Constants ===================================
 
-(define VALID-COMMANDS (list 'set 'get))
+(define RETRIEVAL-COMMANDS (list 'get))
+(define STORAGE-COMMANDS (list 'set))
+(define VALID-COMMANDS (append RETRIEVAL-COMMANDS STORAGE-COMMANDS))
 
 ;;; =============================== Structs ====================================
 
