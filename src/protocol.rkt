@@ -6,7 +6,9 @@
 
 ;;; =============================== Exports ====================================
 
-(provide (struct-out command)
+(provide retrieval-command?
+         storage-command?
+         (struct-out command)
          (struct-out storage-unit)
          bytes->command
          command+data->storage-unit
@@ -17,6 +19,12 @@
 (define RETRIEVAL-COMMANDS (list 'get))
 (define STORAGE-COMMANDS (list 'set))
 (define VALID-COMMANDS (append RETRIEVAL-COMMANDS STORAGE-COMMANDS))
+
+(define (retrieval-command? com)
+  (member (command-name com) RETRIEVAL-COMMANDS))
+
+(define (storage-command? com)
+  (member (command-name com) STORAGE-COMMANDS))
 
 ;;; =============================== Structs ====================================
 
