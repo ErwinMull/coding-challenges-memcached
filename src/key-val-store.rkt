@@ -2,6 +2,10 @@
 
 (require "protocol.rkt")
 
+(provide handle-get
+         handle-set
+         init-key-val-thread)
+
 (define set-channel (make-channel))
 (define get-channel (make-channel))
 
@@ -38,5 +42,5 @@
                               (loop new-ht)))
               (handle-evt get-channel
                             (λ (key)
-                              (channel-put (hash-ref ht key #f))
+                              (channel-put get-channel (hash-ref ht key #f))
                               (loop ht)))))))))
