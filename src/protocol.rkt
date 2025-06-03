@@ -12,7 +12,7 @@
          command+data->storage-unit
          key+storage-unit->bytes)
 
-;;; ============================== Constants ===================================
+;;; ============================ Command types =================================
 
 (define RETRIEVAL-COMMANDS (list 'get))
 (define STORAGE-COMMANDS (list 'set))
