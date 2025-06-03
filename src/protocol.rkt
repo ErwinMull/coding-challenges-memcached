@@ -18,10 +18,10 @@
 
 ;;; =============================== Structs ====================================
 
-[struct command
+(struct command
   (name key flags exptime byte-count noreply)
   #:extra-constructor-name make-command
-  #:transparent]
+  #:transparent)
 
 (struct storage-unit
   (flags byte-count data-block)
