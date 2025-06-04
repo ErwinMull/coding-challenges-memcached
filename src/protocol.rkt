@@ -11,6 +11,7 @@
          (struct-out storage-command)
          (struct-out retrieval-command)
          (struct-out storage-unit)
+         (struct-out exn:command-parse)
          bytes->command
          storage-command+data->storage-unit
          key+storage-unit->bytes)
