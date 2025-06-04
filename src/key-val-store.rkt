@@ -9,16 +9,14 @@
 (define set-channel (make-channel))
 (define get-channel (make-channel))
 
-(define OK 0)
-(define ERR 1)
-
 (define (handle-set com data)
   (define key (command-key com))
-  (define storage-unit (command+data->storage-unit com data))
+  (define storage-unit (storage-command+data->storage-unit com data))
   (channel-put set-channel (vector key storage-unit))
   (void (channel-get set-channel))
-  (unless (command-noreply com)
-    #"STORED"))
+  (if (storage-command-noreply com)
+      #""
+      #"STORED\r\n"))
 
 (define (handle-get com)
   (define key (command-key com))
@@ -26,7 +24,7 @@
   (define res (channel-get get-channel))
   (if res
       (key+storage-unit->bytes key res)
-      #"NOT FOUND"))
+      #"NOT FOUND\r\n"))
 
 (define (init-key-val-thread)
   (thread
@@ -38,7 +36,7 @@
                               (define key (vector-ref v 0))
                               (define storage-unit (vector-ref v 1))
                               (define new-ht (hash-set ht key storage-unit))
-                              (channel-put set-channel OK)
+                              (channel-put set-channel (void))
                               (loop new-ht)))
               (handle-evt get-channel
                             (λ (key)
