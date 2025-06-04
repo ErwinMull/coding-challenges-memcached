@@ -16,14 +16,14 @@
    (test-case
        "bytes->command"
      (check-equal? (bytes->command #"set test 0 0 4")
-                   (make-command 'set 'test 0 #f 4 #f))
+                   (make-storage-command 'set 'test 0 0 4 #f))
      ;; TODO: add more tests!
      )
 
    (test-case
-       "command+data->storage-unit"
-     (check-equal? (command+data->storage-unit
-                    (make-command 'set 'test 0 #f 4 #f)
+       "storage-command+data->storage-unit"
+     (check-equal? (storage-command+data->storage-unit
+                    (make-storage-command 'set 'test 0 0 4 #f)
                     #"hello")
                    (make-storage-unit '0 4 #"hello"))
      ;; TODO: add more tests!
@@ -34,6 +34,6 @@
      (check-equal? (key+storage-unit->bytes
                     'test
                     (make-storage-unit 0 5 #"hello"))
-                   #"VALUES test 0 5\r\nhello")
+                   #"VALUES test 0 5\r\nhello\r\n")
      ;; TODO: add more tests!
      ))))
