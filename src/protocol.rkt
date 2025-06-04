@@ -2,43 +2,41 @@
 
 ;;; =============================== Imports ====================================
 
-(require racket/list)
+(require racket/list
+         racket/match)
 
 ;;; =============================== Exports ====================================
 
-(provide retrieval-command?
-         storage-command?
-         (struct-out command)
+(provide (struct-out command)
+         (struct-out storage-command)
+         (struct-out retrieval-command)
          (struct-out storage-unit)
          bytes->command
-         command+data->storage-unit
+         storage-command+data->storage-unit
          key+storage-unit->bytes)
 
-;;; ============================ Command types =================================
+;;; =========================== Command structs ================================
 
-(define RETRIEVAL-COMMANDS (list 'get))
-(define STORAGE-COMMANDS (list 'set))
-(define VALID-COMMANDS (append RETRIEVAL-COMMANDS STORAGE-COMMANDS))
-
-(define (retrieval-command? com)
-  (member (command-name com) RETRIEVAL-COMMANDS))
-
-(define (storage-command? com)
-  (member (command-name com) STORAGE-COMMANDS))
-
-;;; =============================== Structs ====================================
-
-(struct command
-  (name key flags exptime byte-count noreply)
+(struct command (name key)
   #:extra-constructor-name make-command
   #:transparent)
 
-(struct storage-unit
-  (flags byte-count data-block)
-  #:extra-constructor-name make-storage-unit
+(struct storage-command command (flags exptime bytecount noreply)
+  #:extra-constructor-name make-storage-command
+  #:transparent)
+
+(struct retrieval-command command ()
+  #:extra-constructor-name make-retrieval-command
   #:transparent)
 
 ;;; =========================== Bytes -> command ===============================
+
+(struct exn:command-parse exn ()
+  #:extra-constructor-name make-exn:command-parse
+  #:transparent)
+
+(define (raise-command-parse message)
+  (raise (make-exn:command-parse message (current-continuation-marks))))
 
 (define (bytes->symbol b)
   (string->symbol (bytes->string/utf-8 b)))
@@ -47,27 +45,43 @@
   (string->number (bytes->string/utf-8 b)))
 
 (define (bytes->command b)
+  (match b
+    [(regexp #px"set \\S{1,1024} \\d{1,5} \\d+ \\d+( noreply)?")
+     (bytes->storage-command b)]
+    [(regexp #px"get \\S{1,1024}")
+     (bytes->retrieval-command b)]
+    [else (raise-command-parse (format "Invalid syntax: ~a"
+                                       b))]))
+
+(define (bytes->storage-command b)
   (define parts (regexp-split #rx" " b))
   (define len (length parts))
-  (when (not (or (= len 5) (= len 6)))
-    (error "TODO: custom exception? 1"))
   (define name (bytes->symbol (first parts)))
-  (when (not (member name VALID-COMMANDS))
-    (error "TODO: custom exception? 2"))
   (define key (bytes->symbol (second parts)))
   (define flags (bytes->number (third parts)))
-  (define exptime #f)
-  (define byte-count (bytes->number (fifth parts)))
-  (define noreply (and (= len 6)
-                       (or (bytes=? (sixth parts) #"noreply")
-                           (error "TODO: custom exception? 3"))))
-  (make-command name key flags exptime byte-count noreply))
+  (define exptime (bytes->number (fourth parts)))
+  (define bytecount (bytes->number (fifth parts)))
+  (define noreply (= len 6))
+  (make-storage-command name key flags exptime bytecount noreply))
+
+(define (bytes->retrieval-command b)
+  (define parts (regexp-split #rx" " b))
+  (define name (bytes->symbol (first parts)))
+  (define key (bytes->symbol (second parts)))
+  (make-retrieval-command name key))
+
+;;; ========================= Storage unit struct ==============================
+
+(struct storage-unit
+  (flags bytecount data)
+  #:extra-constructor-name make-storage-unit
+  #:transparent)
 
 ;;; ======================= Command -> storage unit ============================
 
-(define (command+data->storage-unit command data)
-  (make-storage-unit (command-flags command)
-                     (command-byte-count command)
+(define (storage-command+data->storage-unit command data)
+  (make-storage-unit (storage-command-flags command)
+                     (storage-command-bytecount command)
                      data))
 
 ;;; ======================== Storage unit -> bytes =============================
@@ -77,6 +91,7 @@
                  (format "VALUES ~a ~a ~a"
                          key
                          (storage-unit-flags storage-unit)
-                         (storage-unit-byte-count storage-unit)))
+                         (storage-unit-bytecount storage-unit)))
                 #"\r\n"
-                 (storage-unit-data-block storage-unit)))
+                (storage-unit-data storage-unit)
+                #"\r\n"))
