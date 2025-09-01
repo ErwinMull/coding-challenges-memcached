@@ -36,9 +36,6 @@
 (define (print-log-message port date-str level message)
   (fprintf port "[~a] ~a: ~a\n" date-str level message))
 
-(define (log-message/default level message)
-  (log-message LG level message))
-
 (define (setup-log-thread port)
   (thread
    (thunk
