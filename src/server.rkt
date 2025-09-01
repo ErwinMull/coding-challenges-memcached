@@ -7,6 +7,10 @@
          racket/vector
          racket/date)
 
+;;; ================================ CONFIG ====================================
+
+(define LOG-LEVEL 'debug)
+
 ;;; =============================== Exports ====================================
 
 (provide serve/test)
@@ -28,27 +32,31 @@
 (define (kill-worker-thread-pool thp)
   (vector-map kill-thread thp))
 
-;;; =============================== Logging ====================================
+;;; =============================== LOGGING ====================================
 
 (define lg (make-logger))
-(define nrc (make-log-receiver lg 'info))
+(define nrc (make-log-receiver lg LOG-LEVEL))
 
-(define exit-log-loop-channel (make-channel))
+(define (print-log-message port date-str level message)
+  (fprintf port "[~a] ~a: ~a\n" date-str level message))
 
-(define (log-setup exit-channel
-                   log-port)
-  (λ ()
+(define (log-message/default level message)
+  (log-message lg level message))
+
+(define (setup-log-thread port)
+  (thread
+   (thunk
     (let loop ()
-      (sync
-       (handle-evt nrc
-                   (λ (v)
-                     (fprintf log-port
-                              "[~a] ~a: ~a\n"
-                              (date->string (current-date) #t)
-                              (vector-ref v 0)
-                              (vector-ref v 1))
-                     (loop)))
-       exit-channel))))
+      (sync (handle-evt
+             nrc
+             (λ (vec)
+               (define level (vector-ref vec 0))
+               (define message (vector-ref vec 1))
+               (print-log-message port
+                                  (date->string (current-date))
+                                  level
+                                  message)
+               (loop))))))))
 
 ;;; =========================== Request handling ===============================
 
