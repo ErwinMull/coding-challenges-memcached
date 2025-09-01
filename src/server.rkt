@@ -17,13 +17,13 @@
 
 ;;; ============================ WORKER THREADS ================================
 
-(define queue-channel (make-channel))
+(define QUEUE (make-channel))
 
 (define (enqueue val)
-  (channel-put queue-channel val))
+  (channel-put QUEUE val))
 
 (define (dequeue)
-  (channel-get queue-channel))
+  (channel-get QUEUE))
 
 (define (make-worker-thread-pool n thnk)
   (for/vector ([_ (in-range n)])
@@ -34,21 +34,21 @@
 
 ;;; =============================== LOGGING ====================================
 
-(define lg (make-logger))
-(define nrc (make-log-receiver lg LOG-LEVEL))
+(define LG (make-logger))
+(define NRC (make-log-receiver lg LOG-LEVEL))
 
 (define (print-log-message port date-str level message)
   (fprintf port "[~a] ~a: ~a\n" date-str level message))
 
 (define (log-message/default level message)
-  (log-message lg level message))
+  (log-message LG level message))
 
 (define (setup-log-thread port)
   (thread
    (thunk
     (let loop ()
       (sync (handle-evt
-             nrc
+             NRC
              (λ (vec)
                (define level (vector-ref vec 0))
                (define message (vector-ref vec 1))
