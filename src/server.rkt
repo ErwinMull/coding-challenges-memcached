@@ -23,14 +23,14 @@
   (channel-get QUEUE))
 
 (define (make-worker-thread-pool n thnk)
-  (for/vector ([_ (in-range n)])
+  (for/list ([_ (in-range n)])
     (thread
      (thunk (let loop ()
               (thnk)
               (loop))))))
 
 (define (kill-worker-thread-pool thp)
-  (vector-map kill-thread thp))
+  (for-each kill-thread thp))
 
 ;;; =============================== LOGGING ====================================
 
