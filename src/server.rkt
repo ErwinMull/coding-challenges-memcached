@@ -30,18 +30,15 @@
 
 ;;; =============================== LOGGING ====================================
 
-(define LG (make-logger))
-(define NRC (make-log-receiver lg LOG-LEVEL))
-
 (define (print-log-message port date-str level message)
   (fprintf port "[~a] ~a: ~a\n" date-str level message))
 
-(define (setup-log-thread port)
+(define (setup-log-thread nrc port)
   (thread
    (thunk
     (let loop ()
       (sync (handle-evt
-             NRC
+             nrc
              (λ (vec)
                (define level (vector-ref vec 0))
                (define message (vector-ref vec 1))
