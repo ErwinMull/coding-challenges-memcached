@@ -11,10 +11,6 @@
 
 (define LOG-LEVEL 'debug)
 
-;;; =============================== Exports ====================================
-
-(provide serve/test)
-
 ;;; ============================ WORKER THREADS ================================
 
 (define QUEUE (make-channel))
