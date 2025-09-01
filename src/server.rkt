@@ -9,6 +9,23 @@
 
 (provide serve/test)
 
+;;; ============================ WORKER THREADS ================================
+
+(define queue-channel (make-channel))
+
+(define (enqueue val)
+  (channel-put queue-channel val))
+
+(define (dequeue)
+  (channel-get queue-channel))
+
+(define (make-worker-thread-pool n thnk)
+  (for/vector ([_ (in-range n)])
+    (thread thnk)))
+
+(define (kill-worker-thread-pool thp)
+  (vector-map kill-thread thp))
+
 ;;; =============================== Logging ====================================
 
 (define lg (make-logger))
