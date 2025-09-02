@@ -1,6 +1,6 @@
 #lang racket/base
 
-;;; =============================== Imports ====================================
+;;; =============================== IMPORTS ====================================
 
 (require rackunit
          rackunit/text-ui
@@ -9,12 +9,12 @@
 
          "../src/server.rkt")
 
-;;; =========================== Global variables ===============================
+;;; ============================== CONSTANTS ===================================
 
-(define PORTNO 11211)
-(define STOP #f)
+(define PORT 11211)
+(define MEMCACHED-THREAD #f)
 
-;;; ============ Test suite: check if server is running on port ================
+;;; ============ TEST SUITE: CHECK IF SERVER IS RUNNING ON PORT ================
 
 (define port-suite
   (test-suite
@@ -22,26 +22,28 @@
    "Suite for testing whether the server runs on a given port on localhost"
 
    #:before (λ ()
-              (set! STOP (serve/test PORTNO)))
+              (set! MEMCACHED-THREAD (thread (λ ()
+                                               (serve PORT))))
+              (sleep 1))
    #:after (λ ()
-             (STOP)
-             (set! STOP #f))
+             (break-thread MEMCACHED-THREAD)
+             (set! MEMCACHED-THREAD #f))
 
    (test-case
        "Connect to port"
 
      (let ([result (with-handlers ([exn:fail:network? (λ (exn) #f)])
-                     (define-values (in out) (tcp-connect "localhost" PORTNO))
+                     (define-values (in out) (tcp-connect "localhost" PORT))
                      (close-input-port in)
                      (close-output-port out)
                      #t)])
        (unless result
          (with-check-info (['message (string-info
                                       (format "Server not running on port ~a!"
-                                              PORTNO))])
+                                              PORT))])
            (fail-check)))))))
 
-;;; ========================== Running all suites ==============================
+;;; ========================== RUNNING ALL SUITES ==============================
 
 (define SUITES (list port-suite))
 
