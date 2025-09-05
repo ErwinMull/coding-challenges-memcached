@@ -9,7 +9,7 @@
 
 ;;; ================================ export ====================================
 
-(provide parse-memcached-header)
+(provide handle-memcached-command)
 
 ;;; ================================ STRUCT ====================================
 
@@ -39,8 +39,8 @@
 
 ;;; =============================== HANDLER ====================================
 
-(define STORAGE-COMMAND-REGEXP #rx"$(set)")
-(define RETRIEVAL-COMMAND-REGEXP #rx"$(get)")
+(define STORAGE-COMMAND-REGEXP #px"^(set)")
+(define RETRIEVAL-COMMAND-REGEXP #px"^(get)")
 
 (define (handle-memcached-command header in out)
   (match header

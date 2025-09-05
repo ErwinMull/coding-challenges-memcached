@@ -6,7 +6,9 @@
          racket/function
          racket/vector
          racket/date
-         racket/port)
+         racket/port
+
+         "protocol.rkt")
 
 ;;; =============================== EXPORTS ====================================
 
@@ -59,12 +61,12 @@
 
 (define QUEUE (make-channel))
 
-(define (enqueue/line&out line out)
-  (channel-put QUEUE (vector line out)))
+(define (enqueue/header&ports line in out)
+  (channel-put QUEUE (vector line in out)))
 
-(define (dequeue/line&out)
+(define (dequeue/header&ports)
   (define tmp (channel-get QUEUE))
-  (values (vector-ref tmp 0) (vector-ref tmp 1)))
+  (values (vector-ref tmp 0) (vector-ref tmp 1) (vector-ref tmp 2)))
 
 ;;; ============================= CONNECTIONS ==================================
 
@@ -76,7 +78,7 @@
                           (λ (line)
                             (void
                              (when (not (eof-object? line))
-                               (enqueue/line&out line out)))))))
+                               (enqueue/header&ports line in out)))))))
 
 (struct connection-table (ht [evt #:mutable])
   #:property prop:evt (λ (conn-tab)
@@ -139,13 +141,10 @@
     (define thread-pool
       (make-worker-thread-pool WORKER-THREADS-AMOUNT
                                (thunk
-                                (define-values (line out) (dequeue/line&out))
-                                (log-info (format "Received: ~a" line))
-                                (write-bytes (bytes-append #"ECHO: "
-                                                           line
-                                                           #"\r\n")
-                                             out)
-                                (flush-output out))))
+                                (define-values (header in out)
+                                  (dequeue/header&ports))
+                                (log-info (format "Received: ~a" header))
+                                (handle-memcached-command header in out))))
     (with-handlers ([exn:break? (λ (e)
                                   (log-info "Shutting down server")
                                   (connection-table-clear! conn-tab)
