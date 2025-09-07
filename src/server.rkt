@@ -19,18 +19,6 @@
 (define LOG-LEVEL 'debug)
 (define WORKER-THREADS-AMOUNT 16)
 
-;;; ============================ WORKER THREADS ================================
-
-(define (make-worker-thread-pool n thnk)
-  (for/list ([_ (in-range n)])
-    (thread
-     (thunk (let loop ()
-              (thnk)
-              (loop))))))
-
-(define (kill-worker-thread-pool thp)
-  (for-each kill-thread thp))
-
 ;;; =============================== LOGGING ====================================
 
 (define (print-log-message port date-str level message)
@@ -56,17 +44,6 @@
   (thunk
    (thread-send t 1 (thunk (void)))
    (thread-wait t)))
-
-;;; ============================ REQUEST QUEUE =================================
-
-(define QUEUE (make-channel))
-
-(define (enqueue/header&ports line in out)
-  (channel-put QUEUE (vector line in out)))
-
-(define (dequeue/header&ports)
-  (define tmp (channel-get QUEUE))
-  (values (vector-ref tmp 0) (vector-ref tmp 1) (vector-ref tmp 2)))
 
 ;;; ============================= CONNECTIONS ==================================
 
