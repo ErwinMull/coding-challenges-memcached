@@ -54,11 +54,11 @@
   (define bytes-count (string->number (caddr arguments)))
   (define noreply (and (not (null? (cdddr arguments)))
                        (cadddr arguments)))
-  (unless (or (number? flags)
-              (number? exptime)
-              (number? bytes-count)
-              (or (not noreply)
-                  (string=? noreply "noreply")))
+  (unless (and (number? flags)
+               (number? exptime)
+               (number? bytes-count)
+               (or (not noreply)
+                   (string=? noreply "noreply")))
     (raise-exn:fail:client-error "TODO"))
   (values flags exptime bytes-count noreply))
 
@@ -75,11 +75,11 @@
 (define (handle-retrieval-command name key arguments in out)
   (define-values (flags data) (mem-get key))
   (if (and flags data)
-      (reply out "VALUE get ~a ~a\r\n~a" flags (bytes-length data) data)
+      (reply out "VALUE ~a ~a ~a\r\n~a" key flags (bytes-length data) data)
       (reply out "END")))
 
 (define (handle-error name key arguments in out)
-  (fprintf out "ERROR"))
+  (reply out "ERROR"))
 
 (define (name->handler name)
   (case name
