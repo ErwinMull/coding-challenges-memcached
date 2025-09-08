@@ -2,7 +2,7 @@
 
 ;;; =============================== EXPORTS ====================================
 
-(provide dequeue
+(provide enqueue
          make-worker-thread-pool
          kill-worker-thread-pool)
 

@@ -42,6 +42,8 @@
 
 (define (header->name&key&arguments header)
   (define tmp (string-split (bytes->string/utf-8 header)))
+  (unless (> (length tmp) 1)
+    (raise-exn:fail:client-error "TODO"))
   (values (string->symbol (car tmp))
           (string->symbol (cadr tmp))
           (cddr tmp)))
@@ -64,6 +66,8 @@
   (define-values (flags exptime bytes-count noreply)
     (arguments->flags/exptime/bytes-count/noreply arguments))
   (define data (read-bytes bytes-count in))
+  (when (bytes=? #"\r\n" (peek-bytes 2 0 in))
+    (read-bytes 2 in))
   (mem-set key flags data)
   (unless noreply
     (reply out "OK")))
@@ -82,7 +86,6 @@
     [else handle-error]))
 
 (define (handle header in out)
-  (define-values (name key arguments) (header->name&key&arguments header))
   (with-handlers ([exn:fail:client-error? (λ (e)
                                             (reply out
                                                    "CLIENT_ERROR ~a"
@@ -91,7 +94,9 @@
                                             (reply out
                                                    "SERVER_ERROR ~a"
                                                    (exn-message e)))])
+    (define-values (name key arguments) (header->name&key&arguments header))
     ((name->handler name) name key arguments in out)))
 
 (define (reply out form . args)
-  (apply fprintf out (string-append form "\r\n") args))
+  (apply fprintf out (string-append form "\r\n") args)
+  (flush-output out))
