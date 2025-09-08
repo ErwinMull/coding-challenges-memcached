@@ -45,59 +45,6 @@
    (thread-send t 1 (thunk (void)))
    (thread-wait t)))
 
-;;; ============================= CONNECTIONS ==================================
-
-(define (tcp-connection-evt in out eof-return-value)
-  (choice-evt (handle-evt (eof-evt in)
-                          (λ _
-                            eof-return-value))
-              (handle-evt (read-bytes-line-evt in 'return-linefeed)
-                          (λ (line)
-                            (void
-                             (when (not (eof-object? line))
-                               (enqueue/header&ports line in out)))))))
-
-(struct connection-table (ht [evt #:mutable])
-  #:property prop:evt (λ (conn-tab)
-                        (connection-table-evt conn-tab)))
-
-(define (initialize-connection-table)
-  (connection-table (make-hasheq) (choice-evt)))
-
-(define (connection-table-generate-event! conn-tab)
-  (define table (connection-table-ht conn-tab))
-  (set-connection-table-evt! conn-tab
-                             (handle-evt
-                              (apply choice-evt
-                                     (map (λ (item)
-                                            (define-values (id in out)
-                                              (apply values item))
-                                            (tcp-connection-evt in out id))
-                                          (hash->list table)))
-                              (λ (res)
-                                (when (and (not (void? res))
-                                           (hash-has-key? table res))
-                                  (connection-table-remove! conn-tab res))))))
-
-(define (connection-table-set! conn-tab in out)
-  (define id (gensym))
-  (define lst `(,in ,out))
-  (hash-set! (connection-table-ht conn-tab) id lst)
-  (connection-table-generate-event! conn-tab))
-
-(define (connection-table-remove! conn-tab id)
-  (define ht (connection-table-ht conn-tab))
-  (define ports (hash-ref ht id))
-  (hash-remove! ht id)
-  (for-each tcp-abandon-port ports)
-  (connection-table-generate-event! conn-tab))
-
-(define (connection-table-clear! conn-tab)
-  (define table (connection-table-ht conn-tab))
-  (for-each (curry for-each tcp-abandon-port) (hash-values table))
-  (hash-clear! table)
-  (set-connection-table-evt! conn-tab (choice-evt)))
-
 ;;; ================================ SERVER ====================================
 
 (define (serve [port-no 11211]
