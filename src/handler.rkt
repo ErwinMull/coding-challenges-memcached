@@ -74,7 +74,9 @@
 
 (define (handle-retrieval-command name key arguments in out)
   (define-values (flags data) (mem-get key))
-  (reply out "VALUE get ~a ~a\r\n~a" flags (bytes-length data) data))
+  (if (and flags data)
+      (reply out "VALUE get ~a ~a\r\n~a" flags (bytes-length data) data)
+      (reply out "END")))
 
 (define (handle-error name key arguments in out)
   (fprintf out "ERROR"))

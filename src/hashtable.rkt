@@ -29,5 +29,5 @@
 
 (define (mem-get key)
   (mem-access (λ ()
-                (define tmp (hash-ref MEM-HT key))
+                (define tmp (hash-ref MEM-HT key (mem-item #f #f)))
                 (values (mem-item-flags tmp) (mem-item-data tmp)))))
